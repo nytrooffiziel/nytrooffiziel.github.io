@@ -1,0 +1,222 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Dashboard – NYTRO Bot</title>
+  <link rel="stylesheet" href="css/style.css">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+</head>
+<body>
+  <nav class="navbar">
+    <div class="container nav-container">
+      <a href="index.html" class="logo">
+        <span class="logo-icon">⚡</span>
+        <span class="logo-text">NYTRO</span>
+      </a>
+      <ul class="nav-links">
+        <li><a href="index.html">Home</a></li>
+        <li><a href="features.html">Features</a></li>
+        <li><a href="dashboard.html" class="active">Dashboard</a></li>
+        <li><a href="api.html">API</a></li>
+      </ul>
+      <div class="nav-actions">
+        <span id="user-display" style="font-weight:600;color:var(--accent);margin-right:12px;"></span>
+        <a href="#" onclick="logout();return false;" class="btn btn-outline">Abmelden</a>
+      </div>
+    </div>
+  </nav>
+
+  <div class="dashboard-layout">
+    <aside class="sidebar">
+      <div class="sidebar-section">
+        <h4>Übersicht</h4>
+        <a href="dashboard.html" class="sidebar-link active"><span class="icon">📊</span> Dashboard</a>
+        <a href="#guilds" class="sidebar-link"><span class="icon">🏠</span> Meine Guilds</a>
+        <a href="#modules" class="sidebar-link"><span class="icon">🧩</span> Module</a>
+      </div>
+      <div class="sidebar-section">
+        <h4>Einstellungen</h4>
+        <a href="#moderation" class="sidebar-link"><span class="icon">🛡️</span> Moderation</a>
+        <a href="#tickets" class="sidebar-link"><span class="icon">🎫</span> Tickets</a>
+        <a href="#logging" class="sidebar-link"><span class="icon">📝</span> Logging</a>
+        <a href="#leveling" class="sidebar-link"><span class="icon">⭐</span> Leveling</a>
+      </div>
+      <div class="sidebar-section">
+        <h4>Entwickler</h4>
+        <a href="api.html" class="sidebar-link"><span class="icon">🔌</span> API Keys</a>
+        <a href="docs.html" class="sidebar-link"><span class="icon">📚</span> Docs & Lib</a>
+        <a href="callback.html" class="sidebar-link"><span class="icon">🔗</span> OAuth Callback</a>
+      </div>
+    </aside>
+
+    <main class="dashboard-main">
+      <div class="dashboard-header">
+        <div>
+          <h1>Dashboard</h1>
+          <p style="color:var(--text-muted);font-size:0.95rem;">Willkommen zurück! Hier siehst du deine Guild-Übersicht.</p>
+        </div>
+        <div class="guild-select" title="Aktuelle Guild">
+          <div class="guild-avatar">N</div>
+          <div>
+            <div style="font-weight:600;font-size:0.95rem;">NYTRO HQ</div>
+            <div style="font-size:0.75rem;color:var(--text-muted);">12.4k Mitglieder</div>
+          </div>
+        </div>
+      </div>
+
+      <div class="stats-row">
+        <div class="stat-card">
+          <div class="label">Aktive Guilds</div>
+          <div class="value">8</div>
+        </div>
+        <div class="stat-card">
+          <div class="label">Commands heute</div>
+          <div class="value">1.247</div>
+        </div>
+        <div class="stat-card">
+          <div class="label">Tickets offen</div>
+          <div class="value">14</div>
+        </div>
+        <div class="stat-card">
+          <div class="label">Uptime</div>
+          <div class="value">99.9%</div>
+        </div>
+      </div>
+
+      <div class="card" id="guilds">
+        <h3>Meine Guilds</h3>
+        <table class="table">
+          <thead>
+            <tr>
+              <th>Server</th>
+              <th>Mitglieder</th>
+              <th>Module</th>
+              <th>Status</th>
+              <th>Aktion</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td><strong>NYTRO HQ</strong></td>
+              <td>12.412</td>
+              <td>Mod, Tickets, Level, Logs</td>
+              <td><span class="badge badge-success">Online</span></td>
+              <td><a href="#" class="btn btn-outline" style="padding:6px 12px;font-size:0.85rem;">Verwalten</a></td>
+            </tr>
+            <tr>
+              <td><strong>Gaming Lounge</strong></td>
+              <td>3.891</td>
+              <td>Mod, Level</td>
+              <td><span class="badge badge-success">Online</span></td>
+              <td><a href="#" class="btn btn-outline" style="padding:6px 12px;font-size:0.85rem;">Verwalten</a></td>
+            </tr>
+            <tr>
+              <td><strong>Dev Community</strong></td>
+              <td>2.104</td>
+              <td>Tickets, Logs, API</td>
+              <td><span class="badge badge-success">Online</span></td>
+              <td><a href="#" class="btn btn-outline" style="padding:6px 12px;font-size:0.85rem;">Verwalten</a></td>
+            </tr>
+            <tr>
+              <td><strong>Support Hub</strong></td>
+              <td>856</td>
+              <td>Tickets, Mod</td>
+              <td><span class="badge badge-warning">Wartung</span></td>
+              <td><a href="#" class="btn btn-outline" style="padding:6px 12px;font-size:0.85rem;">Verwalten</a></td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+
+      <div class="card" id="modules">
+        <h3>Module Status (NYTRO HQ)</h3>
+        <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:12px;">
+          <div style="padding:16px;background:var(--primary-bg);border-radius:8px;">
+            <div style="font-weight:600;">🛡️ Auto-Mod</div>
+            <span class="badge badge-success" style="margin-top:8px;">Aktiv</span>
+          </div>
+          <div style="padding:16px;background:var(--primary-bg);border-radius:8px;">
+            <div style="font-weight:600;">🎫 Tickets</div>
+            <span class="badge badge-success" style="margin-top:8px;">Aktiv</span>
+          </div>
+          <div style="padding:16px;background:var(--primary-bg);border-radius:8px;">
+            <div style="font-weight:600;">⭐ Leveling</div>
+            <span class="badge badge-success" style="margin-top:8px;">Aktiv</span>
+          </div>
+          <div style="padding:16px;background:var(--primary-bg);border-radius:8px;">
+            <div style="font-weight:600;">📝 Logging</div>
+            <span class="badge badge-success" style="margin-top:8px;">Aktiv</span>
+          </div>
+          <div style="padding:16px;background:#f5f5f5;border-radius:8px;">
+            <div style="font-weight:600;">🎵 Musik</div>
+            <span class="badge badge-info" style="margin-top:8px;">Inaktiv</span>
+          </div>
+          <div style="padding:16px;background:var(--primary-bg);border-radius:8px;">
+            <div style="font-weight:600;">🔌 Webhooks</div>
+            <span class="badge badge-success" style="margin-top:8px;">Aktiv</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="card">
+        <h3>Letzte Aktivitäten</h3>
+        <table class="table">
+          <thead>
+            <tr>
+              <th>Zeit</th>
+              <th>Ereignis</th>
+              <th>Guild</th>
+              <th>Details</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td>vor 2 Min</td>
+              <td>Ticket erstellt</td>
+              <td>Support Hub</td>
+              <td>#ticket-4821</td>
+            </tr>
+            <tr>
+              <td>vor 8 Min</td>
+              <td>Auto-Mod Aktion</td>
+              <td>NYTRO HQ</td>
+              <td>Spam-Nachricht gelöscht</td>
+            </tr>
+            <tr>
+              <td>vor 15 Min</td>
+              <td>Level-Up</td>
+              <td>Gaming Lounge</td>
+              <td>User → Level 24</td>
+            </tr>
+            <tr>
+              <td>vor 32 Min</td>
+              <td>Guild hinzugefügt</td>
+              <td>Neue Community</td>
+              <td>Bot eingeladen</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </main>
+  </div>
+
+  <script src="js/main.js"></script>
+  <script>
+    // Auth Check
+    if (!localStorage.getItem('nytro_logged_in')) {
+      window.location.href = 'login.html';
+    } else {
+      const user = JSON.parse(localStorage.getItem('nytro_user') || '{}');
+      document.getElementById('user-display').textContent = user.username ? `${user.username}#${user.discriminator || '0000'}` : 'Demo User';
+    }
+
+    function logout() {
+      localStorage.removeItem('nytro_logged_in');
+      localStorage.removeItem('nytro_user');
+      localStorage.removeItem('nytro_token');
+      window.location.href = 'login.html';
+    }
+  </script>
+</body>
+</html>

@@ -1,0 +1,150 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Dokumentation – NYTRO Bot</title>
+  <link rel="stylesheet" href="css/style.css">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+</head>
+<body>
+  <nav class="navbar">
+    <div class="container nav-container">
+      <a href="index.html" class="logo">
+        <span class="logo-icon">⚡</span>
+        <span class="logo-text">NYTRO</span>
+      </a>
+      <ul class="nav-links">
+        <li><a href="index.html">Home</a></li>
+        <li><a href="features.html">Features</a></li>
+        <li><a href="dashboard.html">Dashboard</a></li>
+        <li><a href="api.html">API</a></li>
+        <li><a href="docs.html" class="active">Docs</a></li>
+      </ul>
+      <div class="nav-actions">
+        <a href="login.html" class="btn btn-primary">Anmelden</a>
+      </div>
+    </div>
+  </nav>
+
+  <div class="page-header">
+    <div class="container">
+      <h1>Dokumentation</h1>
+      <p>OAuth, Guilds, Callback und Client Libraries für die NYTRO API.</p>
+    </div>
+  </div>
+
+  <div class="content-section">
+    <div class="container" style="max-width:860px;">
+
+      <div class="card" id="oauth">
+        <h3>🔐 OAuth2 Flow</h3>
+        <ol style="padding-left:20px;color:var(--text-muted);line-height:1.8;">
+          <li>User klickt „Mit Discord anmelden“</li>
+          <li>Redirect zu Discord Authorize URL mit <code>client_id</code>, <code>redirect_uri</code>, <code>scope=identify guilds</code></li>
+          <li>Discord leitet zurück auf <code>/callback?code=…&state=…</code></li>
+          <li>Frontend oder Backend tauscht Code gegen Token via <code>POST /oauth/token</code></li>
+          <li>Access Token speichern und für API-Calls verwenden</li>
+        </ol>
+        <div class="code-block">
+<span class="comment">// Beispiel Redirect URI</span>
+https://nytro.bot/callback
+        </div>
+      </div>
+
+      <div class="card" id="guild">
+        <h3>🏠 Guild Management</h3>
+        <p style="color:var(--text-muted);margin-bottom:12px;">
+          Nach der Anmeldung kann der User alle Guilds sehen, in denen er Admin-Rechte hat und der Bot vorhanden ist.
+        </p>
+        <div class="code-block">
+<span class="comment">// GET /guilds</span>
+fetch(<span class="string">'https://api.nytro.bot/v1/guilds'</span>, {
+  headers: {
+    <span class="key">'Authorization'</span>: <span class="string">'Bearer '</span> + token
+  }
+})
+.then(r => r.json())
+.then(data => console.log(data.guilds));
+        </div>
+      </div>
+
+      <div class="card" id="callback">
+        <h3>🔗 Callback Handling</h3>
+        <p style="color:var(--text-muted);margin-bottom:12px;">
+          Die Callback-Seite nimmt den <code>code</code> entgegen und leitet den User ins Dashboard.
+        </p>
+        <div class="code-block">
+<span class="comment">// Pseudo-Code (Frontend)</span>
+const params = new URLSearchParams(window.location.search);
+const code = params.get(<span class="string">'code'</span>);
+const state = params.get(<span class="string">'state'</span>);
+
+<span class="comment">// Code an Backend senden → Token erhalten</span>
+<span class="comment">// Dann: localStorage setzen + redirect /dashboard</span>
+        </div>
+      </div>
+
+      <div class="card" id="lib">
+        <h3>📦 Client Libraries</h3>
+        <p style="color:var(--text-muted);margin-bottom:16px;">
+          Offizielle und Community-Libraries für die NYTRO API.
+        </p>
+
+        <h4 style="margin-bottom:8px;">JavaScript / Node.js</h4>
+        <div class="code-block">
+npm install nytro-api
+
+<span class="comment">// Usage</span>
+const { NytroClient } = require(<span class="string">'nytro-api'</span>);
+const client = new NytroClient({ token: <span class="string">'mtok_…'</span> });
+
+const guilds = await client.guilds.list();
+await client.guilds.setModule(<span class="string">'123…'</span>, <span class="string">'tickets'</span>, { enabled: true });
+        </div>
+
+        <h4 style="margin:20px 0 8px;">Python</h4>
+        <div class="code-block">
+pip install nytro
+
+<span class="comment"># Usage</span>
+from nytro import NytroClient
+
+client = NytroClient(token=<span class="string">"mtok_…"</span>)
+guilds = client.guilds.list()
+        </div>
+
+        <h4 style="margin:20px 0 8px;">discord.js Integration (Beispiel)</h4>
+        <div class="code-block">
+<span class="comment">// In deinem Bot</span>
+const { Client } = require(<span class="string">'discord.js'</span>);
+<span class="comment">// NYTRO Webhooks empfangen und verarbeiten</span>
+app.post(<span class="string">'/nytro-webhook'</span>, (req, res) => {
+  const event = req.body;
+  if (event.type === <span class="string">'ticket.create'</span>) {
+    <span class="comment">// Ticket-Channel erstellen etc.</span>
+  }
+  res.sendStatus(200);
+});
+        </div>
+      </div>
+
+      <div class="card">
+        <h3>📚 Weitere Ressourcen</h3>
+        <ul style="padding-left:20px;color:var(--text-muted);line-height:1.9;">
+          <li><a href="api.html" style="color:var(--accent);">Vollständige API Reference</a></li>
+          <li><a href="dashboard.html" style="color:var(--accent);">Web-Dashboard</a></li>
+          <li><a href="callback.html" style="color:var(--accent);">Callback Demo</a></li>
+          <li>Discord Support Server (Platzhalter)</li>
+        </ul>
+      </div>
+    </div>
+  </div>
+
+  <footer class="footer">
+    <div class="footer-bottom">
+      <p>© 2026 NYTRO Bot · Dokumentation</p>
+    </div>
+  </footer>
+</body>
+</html>

@@ -1,0 +1,65 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>OAuth Callback – NYTRO Bot</title>
+  <link rel="stylesheet" href="css/style.css">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+</head>
+<body>
+  <nav class="navbar">
+    <div class="container nav-container">
+      <a href="index.html" class="logo">
+        <span class="logo-icon">⚡</span>
+        <span class="logo-text">NYTRO</span>
+      </a>
+    </div>
+  </nav>
+
+  <div class="auth-page">
+    <div class="auth-card">
+      <div style="font-size:3rem;margin-bottom:16px;">✅</div>
+      <h1>Authentifizierung erfolgreich</h1>
+      <p class="subtitle">
+        Discord OAuth2 Callback verarbeitet.<br>
+        Du wirst in Kürze zum Dashboard weitergeleitet…
+      </p>
+
+      <div class="code-block" style="text-align:left;font-size:0.8rem;">
+<span class="comment">// Callback URL Beispiel</span>
+https://nytro.bot/callback?code=<span class="string">abc123xyz</span>&amp;state=<span class="string">guild_select</span>
+
+<span class="comment">// Token Response (Mock)</span>
+{
+  <span class="key">"access_token"</span>: <span class="string">"mtok_****"</span>,
+  <span class="key">"token_type"</span>: <span class="string">"Bearer"</span>,
+  <span class="key">"expires_in"</span>: 604800,
+  <span class="key">"refresh_token"</span>: <span class="string">"mref_****"</span>,
+  <span class="key">"scope"</span>: <span class="string">"identify guilds"</span>
+}
+      </div>
+
+      <a href="dashboard.html" class="btn btn-primary btn-lg" style="margin-top:24px;">
+        Zum Dashboard
+      </a>
+    </div>
+  </div>
+
+  <script>
+    // Simuliere OAuth Callback
+    localStorage.setItem('nytro_logged_in', 'true');
+    localStorage.setItem('nytro_user', JSON.stringify({
+      id: '987654321',
+      username: 'NYTROUser',
+      discriminator: '0420',
+      avatar: null
+    }));
+    localStorage.setItem('nytro_token', 'mtok_demo_access_token');
+
+    setTimeout(() => {
+      window.location.href = 'dashboard.html';
+    }, 2500);
+  </script>
+</body>
+</html>
