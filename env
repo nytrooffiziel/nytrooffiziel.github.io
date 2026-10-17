@@ -1,0 +1,8 @@
+DISCORD_CLIENT_ID=deine_client_id
+DISCORD_CLIENT_SECRET=dein_client_secret
+# Produktion (Vercel):
+DISCORD_REDIRECT_URI=https://nytro-bot.vercel.app/callback
+# Lokal:
+# DISCORD_REDIRECT_URI=http://localhost:3000/callback
+SESSION_SECRET=langes_geheimes_passwort
+PORT=3000
