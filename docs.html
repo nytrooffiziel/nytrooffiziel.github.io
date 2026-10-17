@@ -1,0 +1,44 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+<meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Docs – NYTRO</title>
+<link rel="stylesheet" href="css/style.css">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<style>.code{background:#0d1b2a;color:#e0f7fa;border-radius:10px;padding:16px;font-family:monospace;font-size:.88rem;overflow-x:auto;margin:12px 0}</style>
+</head>
+<body>
+<nav class="navbar"><div class="nav-inner">
+<a href="index.html" class="logo"><span>⚡</span> NYTRO</a>
+<ul class="nav-links"><li><a href="index.html" class="">Home</a></li><li><a href="features.html" class="">Features</a></li><li><a href="docs.html" class="active">Docs</a></li><li><a href="dashboard.html" class="">Dashboard</a></li></ul>
+<div class="nav-actions">
+<a href="api/invite" class="btn btn-outline">Bot einladen</a>
+<a href="auth/discord" class="btn btn-primary">Anmelden</a>
+</div></div></nav>
+<section class="section">
+<div class="container" style="max-width:800px">
+<h2 class="section-title">Dokumentation</h2>
+<div class="card" style="margin-bottom:16px">
+<h3>Auth</h3>
+<p style="color:var(--muted);margin-top:8px">Login: <code>auth/discord</code> → Discord OAuth → <code>auth/callback</code></p>
+</div>
+<div class="card" style="margin-bottom:16px">
+<h3>API</h3>
+<div class="code">GET  /api/me
+GET  /api/guilds
+GET  /api/guilds/:id
+POST /api/guilds/:id/settings
+POST /api/guilds/:id/modules/:module
+POST /api/guilds/:id/automod
+GET  /api/invite</div>
+</div>
+<div class="card">
+<h3>Commands (Bot)</h3>
+<div class="code">n!help · n!ban · n!kick · n!mute · n!warn · n!purge
+n!ticket · n!close · n!claim · n!rank · n!leaderboard
+n!setmodlog · n!modules · n!module &lt;name&gt; on|off</div>
+</div>
+</div>
+</section>
+<footer class="footer">© 2026 NYTRO Bot</footer>
+</body></html>
