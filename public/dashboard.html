@@ -1,0 +1,114 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Dashboard – NYTRO</title>
+  <link rel="stylesheet" href="/css/style.css">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+</head>
+<body>
+  <nav class="navbar">
+    <div class="nav-inner">
+      <a href="/" class="logo"><span>⚡</span> NYTRO</a>
+      <ul class="nav-links">
+        <li><a href="/">Home</a></li>
+        <li><a href="/dashboard" class="active">Dashboard</a></li>
+        <li><a href="/docs">Docs</a></li>
+      </ul>
+      <div class="nav-actions">
+        <span id="user-name" style="font-weight:600;color:var(--accent);"></span>
+        <a href="/logout" class="btn btn-outline btn-sm">Abmelden</a>
+      </div>
+    </div>
+  </nav>
+
+  <div class="dash">
+    <aside class="sidebar">
+      <h4>Übersicht</h4>
+      <a href="/dashboard" class="side-link active">🏠 Meine Server</a>
+      <a href="/invite" class="side-link">➕ Bot einladen</a>
+      <h4>Hilfe</h4>
+      <a href="/docs" class="side-link">📚 Dokumentation</a>
+      <a href="/features" class="side-link">✨ Features</a>
+    </aside>
+
+    <main class="main">
+      <h1>Meine Server</h1>
+      <p class="subtitle">Nur Server, auf denen du <strong>Administrator</strong>-Rechte hast und der Bot (optional) bereits ist.</p>
+
+      <div id="loading" class="loading">
+        <div class="spinner"></div>
+        Lade Server…
+      </div>
+
+      <div id="guild-list" class="guild-grid" style="display:none;"></div>
+      <div id="empty" style="display:none;" class="card">
+        <h3>Keine Server gefunden</h3>
+        <p>Du hast auf keinem Server Administrator-Rechte, oder der Bot ist noch nicht eingeladen.</p>
+        <a href="/invite" class="btn btn-primary" style="margin-top:12px;">Bot einladen</a>
+      </div>
+    </main>
+  </div>
+
+  <div class="toast" id="toast"></div>
+
+  <script>
+    async function load() {
+      try {
+        const me = await fetch('/api/me').then(r => r.json());
+        if (me.error) { location.href = '/login'; return; }
+        document.getElementById('user-name').textContent = me.username;
+
+        const data = await fetch('/api/guilds').then(r => r.json());
+        document.getElementById('loading').style.display = 'none';
+
+        if (!data.guilds || !data.guilds.length) {
+          document.getElementById('empty').style.display = 'block';
+          return;
+        }
+
+        const list = document.getElementById('guild-list');
+        list.style.display = 'grid';
+        list.innerHTML = data.guilds.map(g => {
+          const icon = g.icon
+            ? `<img src="https://cdn.discordapp.com/icons/${g.id}/${g.icon}.png?size=64" alt="">`
+            : g.name.charAt(0).toUpperCase();
+          const status = g.botPresent
+            ? '<span class="badge badge-ok">Bot online</span>'
+            : '<span class="badge badge-warn">Bot nicht auf Server</span>';
+          const mods = (g.modules || []).filter(m => m.enabled).map(m => m.name).join(', ') || '–';
+          const action = g.botPresent
+            ? `<a href="/dashboard/${g.id}" class="btn btn-primary btn-sm">Verwalten</a>`
+            : `<a href="/invite" class="btn btn-outline btn-sm">Bot einladen</a>`;
+
+          return `
+            <div class="guild-card">
+              <div class="top">
+                <div class="guild-icon">${icon}</div>
+                <div>
+                  <div class="guild-name">${escapeHtml(g.name)}</div>
+                  <div class="guild-meta">${g.memberCount != null ? g.memberCount + ' Mitglieder' : ''}</div>
+                </div>
+              </div>
+              <div>${status}</div>
+              <div class="guild-meta">Module: ${escapeHtml(mods)}</div>
+              ${action}
+            </div>`;
+        }).join('');
+      } catch (e) {
+        document.getElementById('loading').innerHTML = '<p>Fehler beim Laden. Bitte neu anmelden.</p>';
+        console.error(e);
+      }
+    }
+
+    function escapeHtml(s) {
+      const d = document.createElement('div');
+      d.textContent = s || '';
+      return d.innerHTML;
+    }
+
+    load();
+  </script>
+</body>
+</html>
