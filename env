@@ -1,5 +1,0 @@
-DISCORD_CLIENT_ID=
-DISCORD_CLIENT_SECRET=
-DISCORD_REDIRECT_URI=https://nytro-bot.vercel.app/auth/callback
-SESSION_SECRET=langes_geheimnis
-PORT=3000
