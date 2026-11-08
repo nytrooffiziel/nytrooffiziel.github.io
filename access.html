@@ -1,0 +1,41 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+<meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Zugangsstatus · NYTRO</title>
+<link rel="stylesheet" href="css/style.css">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+</head>
+<body>
+<nav class="navbar"><div class="nav-inner"><a href="index.html" class="logo"><span>⚡</span> NYTRO</a><div class="nav-actions"><a class="btn btn-outline btn-sm" href="auth/logout">Abmelden</a></div></div></nav>
+<main class="auth-wrap"><section class="auth-card" aria-live="polite">
+  <div class="logo" style="justify-content:center;margin-bottom:18px"><span>⚡</span> NYTRO</div>
+  <div class="feature-icon">⏳</div>
+  <h1 id="access-title">Zugang wird geprüft</h1>
+  <p class="sub" id="access-message">Bitte einen Moment warten.</p>
+  <a id="ticket-link" class="btn btn-primary" href="#" hidden>Support-Ticket öffnen</a>
+  <p id="access-error" style="margin-top:18px;font-size:.85rem;color:var(--danger)" hidden>Der Status konnte nicht geladen werden. Bitte versuche es später erneut.</p>
+</section></main>
+<script>
+(async () => {
+  const title = document.getElementById('access-title');
+  const message = document.getElementById('access-message');
+  const ticket = document.getElementById('ticket-link');
+  try {
+    const response = await fetch('/api/access-status', { credentials:'same-origin' });
+    const data = await response.json();
+    if (response.status === 401) { location.href = 'auth/login.html'; return; }
+    if (!response.ok) throw new Error('status');
+    if (data.allowed) { location.href = 'dashboard.html'; return; }
+    title.textContent = data.title || 'Zugang derzeit nicht möglich';
+    message.textContent = data.message || 'Bitte wende dich an das NYTRO-Team.';
+    if (data.supportTicketUrl) { ticket.href = data.supportTicketUrl; ticket.hidden = false; }
+  } catch {
+    title.textContent = 'Status nicht verfügbar';
+    message.textContent = 'Der Zugangsstatus konnte gerade nicht geprüft werden.';
+    document.getElementById('access-error').hidden = false;
+  }
+})();
+</script>
+</body>
+</html>

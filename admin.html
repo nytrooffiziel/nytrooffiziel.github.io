@@ -1,0 +1,183 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="theme-color" content="#050b12">
+<title>Website-Admin · NYTRO</title>
+<link rel="stylesheet" href="css/admin.css">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+</head>
+<body>
+<div class="admin-shell">
+  <aside class="sidebar">
+    <a class="brand" href="index.html"><span class="brand-mark">N</span><span>NYTRO<small>CONTROL CENTER</small></span></a>
+    <div class="workspace"><span class="workspace-dot"></span><span>Website Verwaltung</span><span class="chevron">⌄</span></div>
+    <p class="nav-label">ADMINISTRATION</p>
+    <nav class="side-nav" aria-label="Admin Navigation">
+      <a class="active" href="#overview"><span>◈</span> Übersicht</a>
+      <a href="#access"><span>⌁</span> Zugang &amp; Rollen</a>
+      <a href="#maintenance"><span>◷</span> Wartungsmodus</a>
+      <a href="#preview"><span>◎</span> Zugriff testen</a>
+      <a href="#audit"><span>≋</span> Änderungsprotokoll</a>
+    </nav>
+    <div class="sidebar-bottom"><span class="status-pulse"></span> Systemsteuerung aktiv <small>NYTRO · WEB CONTROL</small></div>
+  </aside>
+
+  <main class="main-area">
+    <header class="topbar">
+      <div class="breadcrumbs"><span>NYTRO</span><b>/</b><strong>Website Admin</strong></div>
+      <div class="top-actions"><span class="secure-label"><i></i> ADMIN SESSION</span><a class="user-chip" href="auth/logout" aria-label="Abmelden"><span id="admin-initials">NY</span><span>⌄</span></a></div>
+    </header>
+
+    <div class="content">
+      <section class="welcome" id="overview">
+        <div><div class="eyebrow"><span class="pulse"></span> CONTROL CENTER <span class="eyebrow-line"></span> LIVE</div><h1>Website <span>Verwaltung</span></h1><p>Steuere Zugänge, Wartung und Schutzregeln für die NYTRO Website.</p></div>
+        <div class="welcome-actions"><a href="index.html" class="button button-quiet">↗ &nbsp; Webseite öffnen</a><button class="button button-primary" id="save-top" type="button">Änderungen speichern&nbsp; <b>↗</b></button></div>
+      </section>
+
+      <div id="notice" class="notice" role="status" aria-live="polite" hidden></div>
+
+      <section class="status-grid" aria-label="Zugangsstatus">
+        <article class="status-card"><div class="status-card-head"><span>WARTUNG</span><span class="status-icon">◷</span></div><strong id="stat-maintenance">—</strong><p>Wartungsmodus</p></article>
+        <article class="status-card"><div class="status-card-head"><span>WARTELISTE</span><span class="status-icon">◌</span></div><strong id="stat-waitlist">—</strong><p>Rollenbasierter Zugang</p></article>
+        <article class="status-card"><div class="status-card-head"><span>BLACKLIST</span><span class="status-icon">⊘</span></div><strong id="stat-blacklist">—</strong><p>Zugangsschutz</p></article>
+        <article class="status-card status-card-danger"><div class="status-card-head"><span>NOTFALLSCHALTER</span><span class="status-icon">ϟ</span></div><strong id="stat-emergency">—</strong><p>Website-Zugänge pausiert</p></article>
+      </section>
+
+      <section class="emergency-panel"><div><div class="eyebrow">EMERGENCY CONTROL</div><h2>Notfall-Zugangssperre</h2><p>Pausiert den Website-Zugang für alle, außer für freigeschaltete Website-Admins.</p></div><label class="switch switch-large"><input id="emergencyStop" type="checkbox"><span></span><b class="sr-only">Notfall-Zugangssperre aktivieren</b></label></section>
+
+      <section class="panel" id="access">
+        <div class="panel-heading"><div><div class="eyebrow">ACCESS CONTROL</div><h2>Zugang &amp; Rollen</h2><p>Rollen werden in deinem Discord-Server geprüft. Nicht vollständig eingerichtete Regeln sperren den Zugang sicherheitshalber.</p></div><span class="panel-icon">⌁</span></div>
+        <div class="settings-grid">
+          <article class="setting-block">
+            <div class="setting-title"><div><span class="setting-symbol danger-symbol">⊘</span><div><h3>Blacklist</h3><p>Mitglieder mit dieser Rolle werden abgewiesen.</p></div></div><label class="switch"><input id="blacklistEnabled" type="checkbox"><span></span><b class="sr-only">Blacklist aktivieren</b></label></div>
+            <label class="field-label" for="blacklistRoleId">Blacklist Rollen-ID</label><input class="field" id="blacklistRoleId" inputmode="numeric" placeholder="Discord Rollen-ID">
+            <label class="field-label" for="blacklistTitle">Seitentitel</label><input class="field" id="blacklistTitle" maxlength="100">
+            <label class="field-label" for="blacklistMessage">Hinweistext</label><textarea class="field" id="blacklistMessage" maxlength="2000" rows="3"></textarea>
+            <label class="field-label" for="supportTicketUrl">Support-Ticket Link <small>(discord.gg oder discord.com)</small></label><input class="field" id="supportTicketUrl" type="url" maxlength="300" placeholder="https://discord.com/channels/…">
+          </article>
+          <article class="setting-block">
+            <div class="setting-title"><div><span class="setting-symbol wait-symbol">◌</span><div><h3>Warteliste</h3><p>Mitglieder sehen den Wartelisten-Hinweis.</p></div></div><label class="switch"><input id="waitlistEnabled" type="checkbox"><span></span><b class="sr-only">Warteliste aktivieren</b></label></div>
+            <label class="field-label" for="waitlistRoleId">Wartelisten Rollen-ID</label><input class="field" id="waitlistRoleId" inputmode="numeric" placeholder="Discord Rollen-ID">
+            <label class="field-label" for="waitlistTitle">Seitentitel</label><input class="field" id="waitlistTitle" maxlength="100">
+            <label class="field-label" for="waitlistMessage">Hinweistext</label><textarea class="field" id="waitlistMessage" maxlength="2000" rows="3"></textarea>
+            <div class="inline-hint"><span>ⓘ</span> Die Rollenprüfung erfolgt bei der Anmeldung und bei geschützten Aktionen.</div>
+          </article>
+        </div>
+      </section>
+
+      <section class="panel" id="maintenance">
+        <div class="panel-heading"><div><div class="eyebrow">SERVICE STATUS</div><h2>Wartungsmodus</h2><p>Wartungsrolle und Nachricht festlegen. Website-Admins behalten während der Wartung Zugriff.</p></div><label class="switch switch-large"><input id="maintenanceEnabled" type="checkbox"><span></span><b class="sr-only">Wartungsmodus aktivieren</b></label></div>
+        <div class="settings-grid">
+          <div><label class="field-label" for="maintenanceRoleId">Wartungs Rollen-ID</label><input class="field" id="maintenanceRoleId" inputmode="numeric" placeholder="Discord Rollen-ID"><p class="field-help">Nur Mitglieder mit dieser Rolle kommen während der Wartung auf die Website.</p></div>
+          <div><label class="field-label" for="maintenanceTitle">Seitentitel</label><input class="field" id="maintenanceTitle" maxlength="100"><label class="field-label" for="maintenanceMessage">Wartungshinweis</label><textarea class="field" id="maintenanceMessage" maxlength="2000" rows="3"></textarea></div>
+        </div>
+      </section>
+
+      <section class="panel preview-panel" id="preview">
+        <div class="panel-heading"><div><div class="eyebrow">ROLE SIMULATOR</div><h2>Zugriff testen</h2><p>Prüfe, welchen Zugangsstatus ein Discord-Mitglied mit seinen aktuellen Rollen erhält.</p></div><span class="panel-icon">◎</span></div>
+        <form id="access-form" class="preview-form"><label class="field-label" for="testUserId">Discord Nutzer-ID</label><input class="field" id="testUserId" inputmode="numeric" placeholder="z. B. 123456789012345678" required><button class="button button-quiet" type="submit">Zugriff prüfen&nbsp; →</button></form>
+        <div id="access-result" class="access-result" role="status" aria-live="polite" hidden></div>
+      </section>
+
+      <section class="panel" id="audit">
+        <div class="panel-heading audit-heading"><div><div class="eyebrow">AUDIT TRAIL</div><h2>Änderungsprotokoll</h2><p>Wer Admin-Einstellungen geändert hat und wann.</p></div><span class="audit-count" id="audit-count">0 Einträge</span></div>
+        <div class="audit-list" id="audit-list"><div class="empty-audit">Noch keine Änderungen protokolliert.</div></div>
+      </section>
+
+      <footer class="page-footer"><span>NYTRO WEB CONTROL</span><span>GESICHERTE ADMIN-VERBINDUNG <i></i></span></footer>
+    </div>
+  </main>
+</div>
+<script>
+(() => {
+  const ids = ['blacklistEnabled','blacklistRoleId','blacklistTitle','blacklistMessage','supportTicketUrl','waitlistEnabled','waitlistRoleId','waitlistTitle','waitlistMessage','maintenanceEnabled','maintenanceRoleId','maintenanceTitle','maintenanceMessage','emergencyStop'];
+  const labels = { blacklistEnabled:'Blacklist', blacklistRoleId:'Blacklist-Rolle', blacklistTitle:'Blacklist-Titel', blacklistMessage:'Blacklist-Text', supportTicketUrl:'Support-Ticket-Link', waitlistEnabled:'Warteliste', waitlistRoleId:'Wartelisten-Rolle', waitlistTitle:'Wartelisten-Titel', waitlistMessage:'Wartelisten-Text', maintenanceEnabled:'Wartungsmodus', maintenanceRoleId:'Wartungsrolle', maintenanceTitle:'Wartungs-Titel', maintenanceMessage:'Wartungstext', emergencyStop:'Notfallschalter' };
+  let csrfToken = '';
+  const $ = id => document.getElementById(id);
+  const notice = (message, kind='') => { $('notice').textContent = message; $('notice').className = `notice ${kind}`; $('notice').hidden = false; };
+  const updateStats = config => {
+    $('stat-maintenance').textContent = config.maintenanceEnabled ? 'AKTIV' : 'AUS';
+    $('stat-waitlist').textContent = config.waitlistEnabled ? 'AKTIV' : 'AUS';
+    $('stat-blacklist').textContent = config.blacklistEnabled ? 'AKTIV' : 'AUS';
+    $('stat-emergency').textContent = config.emergencyStop ? 'AKTIV' : 'AUS';
+    $('stat-emergency').classList.toggle('stat-danger-active', !!config.emergencyStop);
+  };
+  const applyConfig = config => {
+    for (const id of ids) if ($(id)) $(id).type === 'checkbox' ? $(id).checked = !!config[id] : $(id).value = config[id] ?? '';
+    updateStats(config);
+  };
+  const renderAudit = rows => {
+    const list = $('audit-list');
+    list.replaceChildren();
+    $('audit-count').textContent = `${rows.length} ${rows.length === 1 ? 'Eintrag' : 'Einträge'}`;
+    if (!rows.length) { const empty = document.createElement('div'); empty.className = 'empty-audit'; empty.textContent = 'Noch keine Änderungen protokolliert.'; list.append(empty); return; }
+    for (const row of rows) {
+      const item = document.createElement('article'); item.className = 'audit-item';
+      const mark = document.createElement('span'); mark.className = 'audit-mark'; mark.textContent = '↗';
+      const body = document.createElement('div'); body.className = 'audit-body';
+      const heading = document.createElement('strong'); heading.textContent = row.actorName || 'Website-Admin';
+      const detail = document.createElement('p');
+      const changed = Object.keys(row.changes || {}).map(key => labels[key] || key);
+      detail.textContent = `${changed.join(', ') || 'Einstellungen'} geändert`;
+      body.append(heading, detail);
+      const time = document.createElement('time'); time.dateTime = row.createdAt; time.textContent = new Date(row.createdAt).toLocaleString('de-DE');
+      item.append(mark, body, time); list.append(item);
+    }
+  };
+  async function load() {
+    const meResponse = await fetch('/api/me', { credentials:'same-origin' });
+    if (meResponse.ok) {
+      const me = await meResponse.json().catch(() => ({}));
+      const initials = String(me.username || 'NY').trim().split(/[\s._-]+/).slice(0,2).map(part => part[0] || '').join('').toUpperCase();
+      $('admin-initials').textContent = initials || 'NY';
+    }
+    const response = await fetch('/api/admin/config', { credentials: 'same-origin' });
+    const data = await response.json().catch(() => ({}));
+    if (!response.ok) {
+      if (data.error === 'database_not_configured' || data.error === 'admin_storage_unavailable') notice('Admin-Speicher nicht erreichbar. DATABASE_URL für Postgres/Neon muss in Vercel eingerichtet sein.', 'error');
+      else if (response.status === 403) notice('Dein Discord-Konto ist nicht als Website-Admin freigeschaltet.', 'error');
+      else notice('Admin-Bereich konnte nicht geladen werden. Bitte melde dich erneut an.', 'error');
+      return;
+    }
+    csrfToken = data.csrfToken;
+    applyConfig(data.config);
+    renderAudit(data.audit || []);
+  }
+  async function save() {
+    const config = {};
+    for (const id of ids) if ($(id)) config[id] = $(id).type === 'checkbox' ? $(id).checked : $(id).value.trim();
+    const buttons = [$('save-top')]; buttons.forEach(button => { button.disabled = true; });
+    try {
+      const response = await fetch('/api/admin/config', { method:'PUT', credentials:'same-origin', headers:{ 'Content-Type':'application/json', 'X-CSRF-Token':csrfToken }, body:JSON.stringify(config) });
+      const data = await response.json().catch(() => ({}));
+      if (!response.ok) throw new Error(data.error === 'database_not_configured' ? 'Postgres/Neon ist noch nicht verbunden.' : 'Speichern fehlgeschlagen. Prüfe Datenbank und Eingaben.');
+      applyConfig(data.config); renderAudit(data.audit || []); notice('Einstellungen gespeichert und im Änderungsprotokoll erfasst.', 'success');
+    } catch (error) { notice(error.message, 'error'); }
+    finally { buttons.forEach(button => { button.disabled = false; }); }
+  }
+  $('save-top').addEventListener('click', save);
+  document.querySelectorAll('.switch input').forEach(input => input.addEventListener('change', () => {
+    const config = Object.fromEntries(ids.filter(id => $(id)).map(id => [id, $(id).type === 'checkbox' ? $(id).checked : $(id).value]));
+    updateStats(config);
+  }));
+  $('access-form').addEventListener('submit', async event => {
+    event.preventDefault();
+    const result = $('access-result'); result.hidden = false; result.className = 'access-result'; result.textContent = 'Rollen werden geprüft …';
+    try {
+      const response = await fetch('/api/admin/access-check', { method:'POST', credentials:'same-origin', headers:{ 'Content-Type':'application/json', 'X-CSRF-Token':csrfToken }, body:JSON.stringify({ userId:$('testUserId').value.trim() }) });
+      const data = await response.json().catch(() => ({}));
+      if (!response.ok) throw new Error(data.error === 'role_check_not_configured' ? 'Discord-Rollenprüfung benötigt DISCORD_BOT_TOKEN und SITE_DISCORD_GUILD_ID.' : 'Prüfung fehlgeschlagen. Kontrolliere Nutzer-ID und Discord-Verbindung.');
+      result.classList.add(data.allowed ? 'allowed' : 'blocked');
+      result.textContent = data.allowed ? `Zugang erlaubt · Status: ${data.state}` : `Zugang blockiert · ${data.title || data.state} · ${data.message || ''}`;
+    } catch (error) { result.classList.add('blocked'); result.textContent = error.message; }
+  });
+  document.querySelectorAll('.side-nav a').forEach(link => link.addEventListener('click', () => {
+    document.querySelectorAll('.side-nav a').forEach(item => item.classList.remove('active')); link.classList.add('active');
+  }));
+  load().catch(() => notice('Admin-Speicher konnte nicht erreicht werden.', 'error'));
+})();
+</script>
+</body>
+</html>
