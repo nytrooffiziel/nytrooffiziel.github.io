@@ -1,9 +1,12 @@
 require('dotenv').config({ path: require('path').join(__dirname, '.env') });
 const express = require('express');
 const session = require('express-session');
+const PgSession = require('connect-pg-simple')(session);
 const path = require('path');
+const crypto = require('crypto');
 const fetch = require('node-fetch');
 const db = require('./api/database');
+const siteAdmin = require('./api/site-admin-store');
 
 const app = express();
 const PORT = process.env.PORT || 3000;
@@ -19,12 +22,17 @@ function getRedirectUri() {
 }
 const REDIRECT_URI = getRedirectUri();
 const isProd = !!(process.env.VERCEL || process.env.NODE_ENV === 'production');
+if (isProd && !process.env.SESSION_SECRET) {
+  throw new Error('SESSION_SECRET muss für den Produktionsbetrieb als Umgebungsvariable gesetzt sein.');
+}
+if (isProd && !siteAdmin.pool) {
+  throw new Error('DATABASE_URL muss für die Postgres-Datenbank in Vercel gesetzt sein.');
+}
 
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
-app.use(express.static(__dirname));
-
 app.use(session({
+  ...(siteAdmin.pool ? { store: new PgSession({ pool: siteAdmin.pool, tableName: 'user_sessions', createTableIfMissing: true }) } : {}),
   secret: process.env.SESSION_SECRET || 'nytro-dev-secret',
   resave: false,
   saveUninitialized: false,
@@ -39,6 +47,101 @@ app.use(session({
 
 function requireAuth(req, res, next) {
   if (!req.session.user) return res.redirect('/auth/login.html');
+  getAccessStatus(req.session.user.id).then(status => {
+    if (!status.allowed) return res.status(403).json({ error: 'access_denied', access: status });
+    next();
+  }).catch(error => {
+    console.error('Zugriffsprüfung fehlgeschlagen:', error.message);
+    res.status(503).json({ error: 'access_check_unavailable' });
+  });
+}
+
+function isSiteAdmin(userId) {
+  const allowedIds = (process.env.ADMIN_DISCORD_IDS || '').split(',').map(id => id.trim()).filter(Boolean);
+  return !!userId && allowedIds.includes(String(userId));
+}
+
+async function getPolicyConfig() {
+  if (!siteAdmin.pool) return siteAdmin.DEFAULT_CONFIG;
+  return siteAdmin.getConfig();
+}
+
+async function getMemberRoles(userId) {
+  const token = process.env.DISCORD_BOT_TOKEN;
+  const guildId = process.env.SITE_DISCORD_GUILD_ID;
+  if (!token || !guildId) return { error: 'role_check_not_configured', roles: [] };
+  const response = await fetch(`https://discord.com/api/v10/guilds/${encodeURIComponent(guildId)}/members/${encodeURIComponent(userId)}`, {
+    headers: { Authorization: `Bot ${token}` }
+  });
+  if (response.status === 404) return { roles: [] };
+  if (!response.ok) return { error: 'role_check_failed', roles: [] };
+  const member = await response.json();
+  return { roles: Array.isArray(member.roles) ? member.roles : [] };
+}
+
+async function getAccessStatus(userId) {
+  if (isSiteAdmin(userId)) return { allowed: true, state: 'admin' };
+  const config = await getPolicyConfig();
+  if (config.emergencyStop) return { allowed: false, state: 'emergency', title: 'Zugang vorübergehend gesperrt', message: 'Der Website-Zugang wurde vom Admin-Team vorübergehend pausiert.' };
+
+  const gates = [
+    ['blacklistEnabled', 'blacklistRoleId'],
+    ['waitlistEnabled', 'waitlistRoleId'],
+    ['maintenanceEnabled', 'maintenanceRoleId']
+  ].filter(([enabledKey]) => config[enabledKey]);
+  if (!gates.length) return { allowed: true, state: 'allowed' };
+
+  if (gates.some(([, roleKey]) => !/^\d{17,20}$/.test(String(config[roleKey] || '')))) {
+    return { allowed: false, state: 'configuration_error', title: 'Zugang vorübergehend nicht verfügbar', message: 'Eine aktivierte Rollenregel ist noch nicht vollständig eingerichtet.' };
+  }
+  const member = await getMemberRoles(userId);
+  if (member.error) return { allowed: false, state: 'configuration_error', title: 'Zugang vorübergehend nicht verfügbar', message: 'Die Rollenprüfung ist derzeit nicht verfügbar. Bitte versuche es später erneut.' };
+  const roles = new Set(member.roles);
+
+  if (config.blacklistEnabled && roles.has(config.blacklistRoleId)) {
+    return { allowed: false, state: 'blacklist', title: config.blacklistTitle, message: config.blacklistMessage, supportTicketUrl: config.supportTicketUrl };
+  }
+  if (config.waitlistEnabled && roles.has(config.waitlistRoleId)) {
+    return { allowed: false, state: 'waitlist', title: config.waitlistTitle, message: config.waitlistMessage, supportTicketUrl: config.supportTicketUrl };
+  }
+  if (config.maintenanceEnabled && !roles.has(config.maintenanceRoleId)) {
+    return { allowed: false, state: 'maintenance', title: config.maintenanceTitle, message: config.maintenanceMessage };
+  }
+  return { allowed: true, state: 'allowed' };
+}
+
+function requireSiteAdmin(req, res, next) {
+  if (!req.session.user) return res.status(401).json({ error: 'not_authenticated' });
+  if (!isSiteAdmin(req.session.user.id)) return res.status(403).json({ error: 'site_admin_required' });
+  next();
+}
+
+function requireAdminPage(req, res, next) {
+  if (!req.session.user) return res.redirect('/auth/login.html');
+  if (!isSiteAdmin(req.session.user.id)) return res.status(403).send('Dieser Bereich ist nur für Website-Admins.');
+  next();
+}
+
+function requireAccessPage(req, res, next) {
+  if (!req.session.user) return res.redirect('/auth/login.html');
+  getAccessStatus(req.session.user.id).then(status => {
+    if (!status.allowed) return res.redirect('/access.html');
+    next();
+  }).catch(error => {
+    console.error('Seiten-Zugriffsprüfung fehlgeschlagen:', error.message);
+    res.status(503).send('Der Website-Zugang kann gerade nicht geprüft werden. Bitte versuche es später erneut.');
+  });
+}
+
+function requireAdminCsrf(req, res, next) {
+  const origin = req.get('origin');
+  const host = req.get('x-forwarded-host') || req.get('host');
+  let sameOrigin = false;
+  try { sameOrigin = !!origin && new URL(origin).host.toLowerCase() === String(host || '').toLowerCase(); } catch {}
+  const token = req.get('x-csrf-token') || '';
+  const expected = req.session.adminCsrf || '';
+  const validToken = token.length === expected.length && token.length > 0 && crypto.timingSafeEqual(Buffer.from(token), Buffer.from(expected));
+  if (!sameOrigin || !validToken) return res.status(403).json({ error: 'invalid_request_token' });
   next();
 }
 
@@ -97,6 +200,8 @@ app.get('/auth/callback', async (req, res) => {
       avatar: user.avatar
     };
     req.session.guilds = guilds;
+    const access = await getAccessStatus(user.id);
+    if (!access.allowed) return res.redirect('/access.html');
     res.redirect('/dashboard.html');
   } catch (e) {
     console.error(e);
@@ -112,6 +217,99 @@ app.get('/auth/logout', (req, res) => {
 app.get('/api/me', (req, res) => {
   if (!req.session.user) return res.status(401).json({ error: 'Not authenticated' });
   res.json(req.session.user);
+});
+
+app.get('/api/access-status', async (req, res) => {
+  if (!req.session.user) return res.status(401).json({ error: 'not_authenticated' });
+  try { res.json(await getAccessStatus(req.session.user.id)); }
+  catch (error) {
+    console.error('Zugriffsstatus konnte nicht geladen werden:', error.message);
+    res.status(503).json({ error: 'access_check_unavailable' });
+  }
+});
+
+app.get('/admin.html', requireAdminPage, (req, res) => res.sendFile(path.join(__dirname, 'admin.html')));
+app.get('/dashboard.html', requireAccessPage, (req, res) => res.sendFile(path.join(__dirname, 'dashboard.html')));
+app.get('/guild.html', requireAccessPage, (req, res) => res.sendFile(path.join(__dirname, 'guild.html')));
+
+app.get('/api/admin/access', (req, res) => {
+  if (!req.session.user) return res.status(401).json({ error: 'not_authenticated' });
+  res.json({ isAdmin: isSiteAdmin(req.session.user.id) });
+});
+
+app.get('/api/admin/config', requireSiteAdmin, async (req, res) => {
+  if (!siteAdmin.pool) return res.status(503).json({ error: 'database_not_configured' });
+  try {
+    await siteAdmin.ensureSchema();
+    if (!req.session.adminCsrf) req.session.adminCsrf = crypto.randomBytes(32).toString('hex');
+    const [config, audit] = await Promise.all([siteAdmin.getConfig(), siteAdmin.getAudit(30)]);
+    res.json({ config, audit, csrfToken: req.session.adminCsrf });
+  } catch (error) {
+    console.error('Admin-Konfiguration konnte nicht geladen werden:', error.message);
+    res.status(503).json({ error: 'admin_storage_unavailable' });
+  }
+});
+
+app.put('/api/admin/config', requireSiteAdmin, requireAdminCsrf, async (req, res) => {
+  if (!siteAdmin.pool) return res.status(503).json({ error: 'database_not_configured' });
+  const booleanKeys = ['blacklistEnabled', 'waitlistEnabled', 'maintenanceEnabled', 'emergencyStop'];
+  const idKeys = ['blacklistRoleId', 'waitlistRoleId', 'maintenanceRoleId'];
+  const textLimits = {
+    blacklistTitle: 100, blacklistMessage: 2000,
+    waitlistTitle: 100, waitlistMessage: 2000,
+    maintenanceTitle: 100, maintenanceMessage: 2000,
+    supportTicketUrl: 300
+  };
+  const allowed = new Set([...booleanKeys, ...idKeys, ...Object.keys(textLimits)]);
+  const input = req.body && typeof req.body === 'object' && !Array.isArray(req.body) ? req.body : {};
+  if (Object.keys(input).some(key => !allowed.has(key))) return res.status(400).json({ error: 'unknown_config_field' });
+
+  const clean = {};
+  for (const key of booleanKeys) {
+    if (key in input && typeof input[key] !== 'boolean') return res.status(400).json({ error: `invalid_${key}` });
+    if (key in input) clean[key] = input[key];
+  }
+  for (const key of idKeys) {
+    if (!(key in input)) continue;
+    const value = String(input[key] || '').trim();
+    if (value && !/^\d{17,20}$/.test(value)) return res.status(400).json({ error: `invalid_${key}` });
+    clean[key] = value;
+  }
+  for (const [key, limit] of Object.entries(textLimits)) {
+    if (!(key in input)) continue;
+    if (typeof input[key] !== 'string' || input[key].length > limit) return res.status(400).json({ error: `invalid_${key}` });
+    clean[key] = input[key].trim();
+  }
+  if (clean.supportTicketUrl) {
+    let url;
+    try { url = new URL(clean.supportTicketUrl); } catch { return res.status(400).json({ error: 'invalid_supportTicketUrl' }); }
+    if (url.protocol !== 'https:' || !['discord.gg', 'discord.com', 'www.discord.com'].includes(url.hostname.toLowerCase())) {
+      return res.status(400).json({ error: 'invalid_supportTicketUrl' });
+    }
+  }
+
+  try {
+    const config = await siteAdmin.saveConfig(clean, {
+      id: req.session.user.id,
+      name: req.session.user.username || 'Website-Admin'
+    });
+    res.json({ ok: true, config, audit: await siteAdmin.getAudit(30) });
+  } catch (error) {
+    console.error('Admin-Konfiguration konnte nicht gespeichert werden:', error.message);
+    res.status(503).json({ error: 'admin_storage_unavailable' });
+  }
+});
+
+app.post('/api/admin/access-check', requireSiteAdmin, requireAdminCsrf, async (req, res) => {
+  const userId = String(req.body?.userId || '').trim();
+  if (!/^\d{17,20}$/.test(userId)) return res.status(400).json({ error: 'invalid_discord_user_id' });
+  try {
+    const status = await getAccessStatus(userId);
+    res.json({ userId, ...status });
+  } catch (error) {
+    console.error('Rollen-Vorschau fehlgeschlagen:', error.message);
+    res.status(503).json({ error: 'access_check_unavailable' });
+  }
 });
 
 app.get('/api/guilds', requireAuth, async (req, res) => {
@@ -217,6 +415,7 @@ app.get('/api/invite', (req, res) => {
 });
 
 app.get('/', (req, res) => res.sendFile(path.join(__dirname, 'index.html')));
+app.use(express.static(__dirname));
 
 console.log('🔗 Redirect URI:', REDIRECT_URI);
 if (!process.env.VERCEL) {
